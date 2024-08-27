@@ -24,7 +24,7 @@ class PostController extends Controller
             'title' => 'required|max:255',
             'body' => 'required'
         ]);
-        $post = Post::create($fields);
+        $post = $request->user()->posts()->create($fields);
         // return ['post' => $post];
         return  $post;
     }
