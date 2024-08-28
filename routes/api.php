@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\PostController;
+use App\Http\Controllers\ReportController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -20,3 +21,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('posts.comments', CommentController::class)
         ->only(['index', 'store', 'show', 'update', 'destroy']);
 });
+Route::get('/top-users', [ReportController::class, 'topUsers']);
+Route::get('/top-posts', [ReportController::class, 'topPosts']);
