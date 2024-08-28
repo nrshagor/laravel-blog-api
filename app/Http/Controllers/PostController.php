@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\PostResource;
 use App\Models\Post;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -22,7 +23,12 @@ class PostController extends Controller implements HasMiddleware
      */
     public function index()
     {
-        return Post::all();
+        // $posts = Post::with('user')->paginate(10);
+        // return $posts;
+        $posts = Post::with('user')->paginate(3);
+        return PostResource::collection($posts)
+            ->response()
+            ->setStatusCode(200);
     }
 
     /**
@@ -36,7 +42,9 @@ class PostController extends Controller implements HasMiddleware
         ]);
         $post = $request->user()->posts()->create($fields);
         // return ['post' => $post];
-        return  $post;
+        return (new PostResource($post))
+            ->response()
+            ->setStatusCode(201);
     }
 
     /**
@@ -45,7 +53,7 @@ class PostController extends Controller implements HasMiddleware
     public function show(Post $post)
     {
         // return ['post' => $post];
-        return $post;
+        return new PostResource($post->load('user'));
     }
 
     /**
@@ -53,14 +61,27 @@ class PostController extends Controller implements HasMiddleware
      */
     public function update(Request $request, Post $post)
     {
+        // Gate::authorize('modify', $post);
+        // $fields =  $request->validate([
+        //     'title' => 'required|max:255',
+        //     'body' => 'required'
+        // ]);
+        // $post->update($fields);
+
+        // return  $post;
+
         Gate::authorize('modify', $post);
-        $fields =  $request->validate([
+
+        $fields = $request->validate([
             'title' => 'required|max:255',
-            'body' => 'required'
+            'body' => 'required',
         ]);
+
         $post->update($fields);
 
-        return  $post;
+        return (new PostResource($post))
+            ->response()
+            ->setStatusCode(200);
     }
 
     /**
@@ -68,8 +89,15 @@ class PostController extends Controller implements HasMiddleware
      */
     public function destroy(Post $post)
     {
+        // Gate::authorize('modify', $post);
+        // $post->delete();
+        // return ['message' => 'The Post was deleted'];
         Gate::authorize('modify', $post);
+
         $post->delete();
-        return ['message' => 'The Post was deleted'];
+
+        return response()->json([
+            'message' => 'The Post was deleted'
+        ], 204);
     }
 }
