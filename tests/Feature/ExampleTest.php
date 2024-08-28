@@ -59,6 +59,40 @@ class ExampleTest extends TestCase
         $response->assertStatus(204); // Expect 204 for successful deletion with no content
         $this->assertDatabaseMissing('posts', ['id' => $post->id]);
     }
+
+    public function test_user_can_create_post_and_add_comment()
+    {
+        $user = User::factory()->create();
+        Sanctum::actingAs($user);
+
+        // Create a post
+        $postData = [
+            'title' => 'Sample Title',
+            'body' => 'Sample content of the post.',
+        ];
+        $postResponse = $this->post('/api/posts', $postData, ['Accept' => 'application/json']);
+
+        $postResponse->assertStatus(201)
+            ->assertJson(['data' => ['title' => 'Sample Title']]);
+
+        $postId = $postResponse->json('data.id');
+
+        // Add a comment
+        $commentData = [
+            'body' => 'Sample comment.',
+        ];
+        $commentResponse = $this->post("/api/posts/{$postId}/comments", $commentData, ['Accept' => 'application/json']);
+
+        $commentResponse->assertStatus(201)
+            ->assertJson([
+                'body' => 'Sample comment.',
+                'user_id' => $user->id, // Optional: Check if you need to validate user_id
+                'post_id' => $postId,    // Optional: Check if you need to validate post_id
+            ]);
+
+        // Verify that the comment is added
+        $this->assertDatabaseHas('comments', ['body' => 'Sample comment.']);
+    }
     /**
      * A basic test example.
      */
