@@ -8,6 +8,10 @@ use Illuminate\Http\Resources\Json\JsonResource;
 class PostResource extends JsonResource
 {
     /**
+     * Remove the "data" wrapping of the resource.
+     */
+    public static $wrap = null;
+    /**
      * Transform the resource into an array.
      *
      * @return array<string, mixed>
