@@ -24,7 +24,7 @@ class ExampleTest extends TestCase
         $response = $this->postJson('/api/posts', $postData);
 
         $response->assertStatus(201)
-            ->assertJson(['data' => ['title' => 'Sample Title']]);
+            ->assertJson(['title' => 'Sample Title']);
 
         $this->assertDatabaseHas('posts', ['title' => 'Sample Title']);
     }
@@ -43,7 +43,7 @@ class ExampleTest extends TestCase
         $response = $this->putJson("/api/posts/{$post->id}", $updatedPostData);
 
         $response->assertStatus(200)
-            ->assertJson(['data' => ['title' => 'Updated Title']]);
+            ->assertJson(['title' => 'Updated Title']);
 
         $this->assertDatabaseHas('posts', ['title' => 'Updated Title']);
     }
@@ -73,9 +73,9 @@ class ExampleTest extends TestCase
         $postResponse = $this->post('/api/posts', $postData, ['Accept' => 'application/json']);
 
         $postResponse->assertStatus(201)
-            ->assertJson(['data' => ['title' => 'Sample Title']]);
+            ->assertJson(['title' => 'Sample Title']);
 
-        $postId = $postResponse->json('data.id');
+        $postId = $postResponse->json('id');
 
         // Add a comment
         $commentData = [
