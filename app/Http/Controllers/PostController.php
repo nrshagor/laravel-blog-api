@@ -9,6 +9,7 @@ use Illuminate\Routing\Controllers\HasMiddleware;
 use Illuminate\Routing\Controllers\Middleware;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class PostController extends Controller implements HasMiddleware
 {
@@ -58,29 +59,7 @@ class PostController extends Controller implements HasMiddleware
             ->setStatusCode(201);
     }
 
-    public function update(Request $request, Post $post)
-    {
-        Gate::authorize('modify', $post);
 
-        $fields = $request->validate([
-            'title' => 'required|max:255',
-            'body' => 'required',
-            'thumbnail' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048', // Validation for the thumbnail
-        ]);
-
-        if ($request->hasFile('thumbnail')) {
-            if ($post->thumbnail) {
-                Storage::disk('public')->delete($post->thumbnail);
-            }
-            $fields['thumbnail'] = $request->file('thumbnail')->store('thumbnails', 'public');
-        }
-
-        $post->update($fields);
-
-        return (new PostResource($post))
-            ->response()
-            ->setStatusCode(200);
-    }
 
     /**
      * Display the specified resource.
@@ -91,9 +70,58 @@ class PostController extends Controller implements HasMiddleware
         return new PostResource($post->load('user'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
+
+    public function update(Request $request, Post $post)
+    {
+        // Log the incoming request data
+        Log::info('Update request data:', $request->all());
+
+        // Authorize user to update the post
+        Gate::authorize('modify', $post);
+
+        // Validate the incoming request data
+        $fields = $request->validate([
+            'title' => 'required|max:255',
+            'body' => 'required',
+            'thumbnail' => 'nullable|string', // Expect a base64-encoded string
+        ]);
+
+        // Handle the thumbnail file if provided as a base64 string
+        if ($request->filled('thumbnail')) {
+            // Delete the old thumbnail if it exists
+            if ($post->thumbnail) {
+                Storage::disk('public')->delete($post->thumbnail);
+            }
+
+            // Extract base64 data from the string
+            $base64Image = $request->input('thumbnail');
+            $imageParts = explode(';', $base64Image);
+            $imageBase64 = explode(',', $imageParts[1])[1];
+            $imageData = base64_decode($imageBase64);
+
+            // Generate a unique filename
+            $timestamp = now()->format('Ymd_His_u');
+            $filename = $timestamp . '_thumbnail.png'; // Use appropriate file extension
+            $filepath = 'images/' . $filename;
+
+            // Store the image in the public/images directory
+            Storage::disk('public')->put($filepath, $imageData);
+            $fields['thumbnail'] = $filepath;
+        }
+
+        // Update the post with the new data
+        $post->update($fields);
+
+        // Log updated post data
+        Log::info('Updated post:', $post->toArray());
+
+        return (new PostResource($post))
+            ->response()
+            ->setStatusCode(200);
+    }
+
+
+
 
 
     /**
