@@ -28,6 +28,7 @@ class ReportController extends Controller
             return Post::withCount('comments')
                 ->orderBy('comments_count', 'desc')
                 ->take(5)
+                ->with('user') // Eager load the user relationship to reduce queries
                 ->get();
         });
 
