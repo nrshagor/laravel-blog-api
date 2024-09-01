@@ -127,3 +127,7 @@ php artisan test
   Tests:    8 passed (20 assertions)
   Duration: 0.90s
 ```
+
+## Authors
+
+-   [@nrshagor](https://github.com/nrshagor)
